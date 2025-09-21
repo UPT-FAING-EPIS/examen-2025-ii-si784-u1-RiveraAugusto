@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "qknFENdlAxJKyryD6AR6rZashWVhQvAq138wPNh+q8s=",
+  "Source": "AuctionApp.API",
+  "BasePath": "_content/AuctionApp.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
