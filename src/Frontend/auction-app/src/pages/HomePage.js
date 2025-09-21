@@ -33,12 +33,6 @@ const HomePage = () => {
   }, []);
 
   const filterAuctions = () => {
-    // Temporalmente devolver todas las subastas sin filtrar
-    console.log('Todas las subastas sin filtrar:', auctions);
-    return auctions;
-    
-    // El resto del código comentado
-    /*
     const now = new Date();
     console.log('Fecha actual para comparación:', now);
     
@@ -62,7 +56,6 @@ const HomePage = () => {
       console.error('Error al filtrar subastas:', error);
       return auctions; // En caso de error, mostrar todas las subastas
     }
-    */
   } // Sin punto y coma aquí
 
   const filteredAuctions = filterAuctions();

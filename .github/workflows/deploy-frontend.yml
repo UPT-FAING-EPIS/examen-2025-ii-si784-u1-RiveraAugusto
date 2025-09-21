@@ -1,0 +1,52 @@
+name: 'Deploy Frontend to Firebase'
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/Frontend/**'
+
+jobs:
+  deploy-frontend:
+    name: 'Deploy Frontend'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Get Backend URL
+        id: get-url
+        run: |
+          echo "BACKEND_URL=$(gcloud run services describe auction-api --platform managed --region us-central1 --format 'value(status.url)')/api" >> $GITHUB_ENV
+        env:
+          GCLOUD_AUTH: ${{ secrets.GCP_SA_KEY }}
+          
+      - name: Install Dependencies
+        run: |
+          cd src/Frontend/auction-app
+          npm ci
+          
+      - name: Update API URL
+        run: |
+          cd src/Frontend/auction-app/src/services
+          sed -i "s|http://localhost:5119/api|${{ env.BACKEND_URL }}|g" api.js
+          
+      - name: Build
+        run: |
+          cd src/Frontend/auction-app
+          npm run build
+          
+      - name: Deploy to Firebase
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          channelId: live
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+          entryPoint: './src/Frontend/auction-app'

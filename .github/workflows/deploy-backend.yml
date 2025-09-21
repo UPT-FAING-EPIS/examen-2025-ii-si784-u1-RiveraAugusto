@@ -1,0 +1,55 @@
+name: 'Deploy Backend to Cloud Run'
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/Backend/**'
+
+jobs:
+  deploy-backend:
+    name: 'Deploy Backend'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+          
+      - name: Build and Publish
+        run: |
+          cd src/Backend/AuctionApp.API
+          dotnet publish -c Release -o ./publish
+          
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        
+      - name: Google Auth
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v1'
+        
+      - name: Build and Push Docker image
+        run: |
+          cd src/Backend/AuctionApp.API
+          gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/auction-api:${{ github.sha }}
+          
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy auction-api \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/auction-api:${{ github.sha }} \
+            --platform managed \
+            --region us-central1 \
+            --allow-unauthenticated \
+            --set-env-vars="ConnectionStrings__DefaultConnection=Server=${{ secrets.DB_HOST }};Database=calidad_bd_examen;User=${{ secrets.DB_USER }};Password=${{ secrets.DB_PASSWORD }};"
+            
+      - name: Get Service URL
+        run: |
+          echo "Backend URL: $(gcloud run services describe auction-api --platform managed --region us-central1 --format 'value(status.url)')"
